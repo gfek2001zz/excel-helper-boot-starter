@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.com.quanyou.excel.dao.IExcelTaskDao">
+    <insert id="initTask" useGeneratedKeys="false" parameterType="cn.com.quanyou.excel.entity.TaskModel">
+        <selectKey resultType="java.lang.Long" keyProperty="taskId" order="BEFORE">
+            select SYS_EXCEL_TASK_S.NEXTVAL from dual
+        </selectKey>
+
+        insert into SYS_EXCEL_TASK_T (
+            TASK_ID,
+            REPORT_TYPE,
+            STATUS,
+            OPERATION_TYPE,
+            START_TIME,
+            CREATE_USER,
+            CREATE_TIME,
+            LAST_UPDATE_USER,
+            LAST_UPDATE_TIME
+        ) values (
+            #{taskId, jdbcType=NUMERIC},
+            #{reportType, jdbcType=VARCHAR},
+            'PENDING',
+            #{operationType, jdbcType=NUMERIC},
+            sysdate,
+            #{createUser, jdbcType=VARCHAR},
+            sysdate,
+            #{lastUpdateUser, jdbcType=VARCHAR},
+            sysdate
+        )
+    </insert>
+
+
+    <update id="updateTaskStatus">
+        update SYS_EXCEL_TASK_T t set
+               t.STATUS = #{status, jdbcType=VARCHAR}
+         where t.TASK_ID = #{taskId, jdbcType=NUMERIC}
+    </update>
+
+
+    <update id="updateTaskInfo">
+        update SYS_EXCEL_TASK_T t set
+               t.REPORT_TYPE = #{reportType, jdbcType=VARCHAR},
+               t.FILE_NAME = #{fileName, jdbcType=VARCHAR},
+               t.STATUS = #{status, jdbcType=VARCHAR},
+               t.OPERATION_TYPE = #{operationType, jdbcType=VARCHAR},
+               t.END_TIME = #{endTime, jdbcType=VARCHAR},
+               t.EXEC_RESULTS = #{execResults, jdbcType=VARCHAR},
+               t.DOWNLOAD_URL = #{downloadUrl, jdbcType=VARCHAR}
+         where t.TASK_ID = #{taskId, jdbcType=VARCHAR}
+    </update>
+
+    <select id="findExcelTaskByTaskId" resultType="cn.com.quanyou.excel.entity.TaskModel">
+        select t.TASK_ID,
+               t.REPORT_TYPE,
+               t.STATUS,
+               t.OPERATION_TYPE,
+               t.DOWNLOAD_URL,
+               t.EXEC_RESULTS
+          from SYS_EXCEL_TASK_T t
+         where t.TASK_ID = #{taskId, jdbcType=NUMERIC}
+    </select>
+
+    <select id="findExcelCfgByReportType" resultType="cn.com.quanyou.excel.entity.ExcelCfgModel">
+        select t.ID,
+               t.REPORT_NAME,
+               t.REPORT_TYPE,
+               t.EXCEL_TYPE,
+               t.FILE_NAME,
+               t.ROWS_NUM,
+               t.TEMPLATE_PATH,
+               t.EXPORT_PATH
+          from SYS_EXCEL_CFG_T t
+         where t.REPORT_NAME = #{reportName, jdbcType=VARCHAR}
+           and t.REPORT_TYPE = #{reportType, jdbcType=VARCHAR}
+    </select>
+
+    <select id="findExcelSheetCfgByReportType" resultType="cn.com.quanyou.excel.entity.ExcelSheetCfgModel">
+        select t.ID,
+               t.EXCEL_CFG_ID,
+               t.SHEET_NAME,
+               t.TITLE_ROW,
+               t.DATA_ROW,
+               t.PROVIDER_BEAN,
+               t.CONSUMER_BEAN,
+               t.VO_BEAN
+          from SYS_EXCEL_SHEET_CFG_T t,
+               SYS_EXCEL_CFG_T et
+         where t.EXCEL_CFG_ID = et.ID
+           and et.REPORT_NAME = #{reportName, jdbcType=VARCHAR}
+           and et.REPORT_TYPE = #{reportType, jdbcType=VARCHAR}
+    </select>
+
+
+    <select id="findExcelColumnCfgByReportType" resultType="cn.com.quanyou.excel.entity.ExcelColumnCfgModel">
+        select t.ID,
+               t.EXCEL_SHEET_CFG_ID,
+               t.COLUMN_NAME,
+               t.COLUMN_FORMAT,
+               t.FIELD_NAME,
+               t.FIELD_TYPE,
+               t.VALIDATOR_BEAN,
+               t.DEFAULT_VAL,
+               t.COLUMN_SORT
+          from SYS_EXCEL_COLUMN_CFG_T t,
+               SYS_EXCEL_SHEET_CFG_T st,
+               SYS_EXCEL_CFG_T et
+         where t.EXCEL_SHEET_CFG_ID = st.ID
+           and st.EXCEL_CFG_ID = et.ID
+           and et.REPORT_NAME = #{reportName, jdbcType=VARCHAR}
+           and et.REPORT_TYPE = #{reportType, jdbcType=VARCHAR}
+    </select>
+
+
+    <select id="findErrorMeta" resultType="cn.com.quanyou.excel.context.impl.ErrorMeta">
+        select t.ROW_NAME,
+               t.COL_NAME,
+               t.MESSAGE
+          from SYS_EXCEL_ERROR_T t
+         where t.TASK_ID = #{taskId, jdbcType=NUMERIC}
+    </select>
+
+    <delete id="deleteErrorMeta">
+        delete from SYS_EXCEL_ERROR_T t
+         where t.TASK_ID = #{taskId, jdbcType=NUMERIC}
+    </delete>
+
+</mapper>
